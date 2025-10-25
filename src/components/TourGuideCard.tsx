@@ -1,5 +1,6 @@
-import { Mail, Phone, GraduationCap, Award, Globe } from 'lucide-react';
-import type { Guide } from '../lib/api';
+// TourGuideCard.tsx — чистый, ровный вариант
+import { Mail, Phone, GraduationCap, Award, Globe, MapPin } from "lucide-react";
+import type { Guide } from "../lib/api";
 
 interface TourGuideCardProps {
   guide: Guide;
@@ -8,71 +9,136 @@ interface TourGuideCardProps {
 
 export function TourGuideCard({ guide, onSelectGuide }: TourGuideCardProps) {
   return (
-    <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow overflow-hidden">
-      <div className="aspect-square bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center">
-        {guide.image_url ? (
-          <img
-            src={guide.image_url}
-            alt={guide.full_name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-32 h-32 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-4xl font-bold text-white">
-              {guide.full_name.charAt(0)}
+    <article
+      className="
+        rounded-2xl overflow-hidden
+        bg-white/90 dark:bg-neutral-950/90
+        ring-1 ring-neutral-200/70 dark:ring-neutral-800/70
+        shadow-sm
+      "
+    >
+      {/* Узкая плашка — не ломает радиусы (overflow-hidden решает) */}
+      <div className="h-1.5 w-full bg-[linear-gradient(90deg,#2563EB,#7C3AED)]" />
+
+      <div className="p-6">
+        {/* Шапка */}
+        <div className="flex items-start gap-4">
+          {/* Аватар/инициал — без лишних теней */}
+          <div className="h-16 w-16 rounded-2xl overflow-hidden bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-xl font-bold text-neutral-700 dark:text-neutral-200 ring-1 ring-neutral-300/60 dark:ring-neutral-700/60">
+            {guide.image_url ? (
+              <img src={guide.image_url} alt={guide.full_name} className="h-full w-full object-cover" />
+            ) : (
+              <span>{guide.full_name?.charAt(0) ?? "G"}</span>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <h3 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white truncate">
+              {guide.full_name}
+            </h3>
+            {guide.title && (
+              <p className="text-indigo-700 dark:text-indigo-400 font-semibold">
+                {guide.title}
+              </p>
+            )}
+            {guide.location && (
+              <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
+                <MapPin className="w-4 h-4" /> {guide.location}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Языки — лёгкий чип */}
+        {guide.languages && (
+          <div className="mt-4">
+            <span className="
+              inline-flex items-center gap-1
+              rounded-full px-2.5 py-1 text-xs font-medium
+              ring-1 ring-neutral-200/70 dark:ring-neutral-800/70
+              text-neutral-700 dark:text-neutral-200
+              bg-white/60 dark:bg-neutral-900/40
+            ">
+              <Globe className="w-3.5 h-3.5" />
+              Языки: {guide.languages}
             </span>
           </div>
         )}
-      </div>
-      <div className="p-6">
-        <h3 className="text-2xl font-bold text-gray-900 mb-1">{guide.full_name}</h3>
-        <p className="text-blue-600 font-semibold mb-2">{guide.title}</p>
-        {guide.languages && (
-          <p className="text-gray-600 text-sm mb-4 flex items-center gap-1">
-            <Globe className="w-4 h-4" />
-            Languages: {guide.languages}
+
+        {/* Описание — компактная типографика */}
+        {guide.bio && (
+          <p className="mt-4 text-[15px] leading-6 text-neutral-700 dark:text-neutral-300">
+            {guide.bio}
           </p>
         )}
 
-        <p className="text-gray-700 mb-4 line-clamp-3">{guide.bio}</p>
-
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <GraduationCap className="w-4 h-4 text-blue-600" />
-            <span className="line-clamp-1">{guide.education || 'Education details available upon request'}</span>
+        {/* Факты — ровная линия, без «плиток» */}
+        <div className="
+          mt-4 grid sm:grid-cols-2 gap-3 text-sm
+          text-neutral-600 dark:text-neutral-400
+        ">
+          <div className="flex items-center gap-2">
+            <GraduationCap className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <span className="truncate">{guide.education || "Образование по запросу"}</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Award className="w-4 h-4 text-blue-600" />
-            <span>{guide.experience_years} years of experience</span>
+          <div className="flex items-center gap-2">
+            <Award className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <span>{guide.experience_years} лет опыта</span>
           </div>
         </div>
 
-        <div className="space-y-2 mb-4 pt-4 border-t">
-          {guide.email && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Mail className="w-4 h-4 text-blue-600" />
-              <a href={`mailto:${guide.email}`} className="hover:text-blue-600 transition-colors">
-                {guide.email}
-              </a>
-            </div>
-          )}
-          {guide.phone && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Phone className="w-4 h-4 text-blue-600" />
-              <a href={`tel:${guide.phone}`} className="hover:text-blue-600 transition-colors">
-                {guide.phone}
-              </a>
-            </div>
-          )}
-        </div>
+        {/* Контакты + CTA — единая высота, без тяжёлых теней */}
+        <div className="
+          mt-5 grid grid-cols-1 gap-2
+          border-t border-neutral-200/70 dark:border-neutral-800/70 pt-4
+        ">
+          {guide.email ? (
+            <a
+              href={`mailto:${guide.email}`}
+              className="
+                group inline-flex items-center justify-start gap-2
+                rounded-xl px-3 py-2.5
+                text-sm font-medium
+                ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-800/70
+                text-neutral-700 dark:text-neutral-200
+                hover:bg-white/70 dark:hover:bg-neutral-900/70 transition
+              "
+            >
+              <Mail className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <span className="truncate">{guide.email}</span>
+            </a>
+          ) : <div className="hidden sm:block" />}
 
-        <button
-          onClick={() => onSelectGuide(guide.id)}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition-colors"
-        >
-          Book with Guide
-        </button>
+          {guide.phone ? (
+            <a
+              href={`tel:${guide.phone}`}
+              className="
+                group inline-flex items-center justify-start gap-2
+                rounded-xl px-3 py-2.5
+                text-sm font-medium
+                ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-800/70
+                text-neutral-700 dark:text-neutral-200
+                hover:bg-white/70 dark:hover:bg-neutral-900/70 transition
+              "
+            >
+              <Phone className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <span className="truncate">{guide.phone}</span>
+            </a>
+          ) : <div className="hidden sm:block" />}
+
+          <button
+            onClick={() => onSelectGuide(guide.id)}
+            className="
+              inline-flex items-center justify-center gap-2
+              rounded-xl px-4 py-2.5 text-sm font-semibold text-white
+              bg-[linear-gradient(135deg,#2563EB,#7C3AED)]
+              hover:brightness-105 active:brightness-100 transition
+            "
+          >
+            Забронировать у гида
+          </button>
+        </div>
       </div>
-    </div>
+    </article>
   );
 }

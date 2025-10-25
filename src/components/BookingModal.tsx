@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Loader2, CheckCircle2, AlertCircle, Calendar, User, Mail, Phone, Users, StickyNote } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient, type Guide, type Tour } from '../lib/api';
 
 interface BookingModalProps {
@@ -32,6 +33,9 @@ export function BookingModal({ isOpen, onClose, selectedGuideId }: BookingModalP
       if (selectedGuideId) {
         setFormData(prev => ({ ...prev, guide_id: selectedGuideId }));
       }
+      const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+      window.addEventListener('keydown', onEsc);
+      return () => window.removeEventListener('keydown', onEsc);
     }
   }, [isOpen, selectedGuideId]);
 
@@ -77,7 +81,7 @@ export function BookingModal({ isOpen, onClose, selectedGuideId }: BookingModalP
           notes: '',
         });
         setSubmitStatus('idle');
-      }, 2000);
+      }, 1800);
     } catch (error) {
       setSubmitStatus('error');
       console.error('Error submitting booking:', error);
@@ -88,176 +92,252 @@ export function BookingModal({ isOpen, onClose, selectedGuideId }: BookingModalP
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Book Your Adventure</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
+  const today = new Date().toISOString().split('T')[0];
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Your Name *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.client_name}
-              onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="John Doe"
-            />
-          </div>
+  const fieldBase =
+    'w-full rounded-xl border border-transparent bg-white/70 dark:bg-neutral-900/80 backdrop-blur-sm shadow-sm ring-1 ring-neutral-300/80 dark:ring-neutral-700 px-4 py-3.5 outline-none transition focus:ring-2 focus:ring-sky-400/70 dark:focus:ring-sky-800/70 placeholder:text-neutral-500 text-neutral-500';
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Email *
-            </label>
-            <input
-              type="email"
-              required
-              value={formData.client_email}
-              onChange={(e) => setFormData({ ...formData, client_email: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="john@example.com"
-            />
-          </div>
+  const groupLabel = 'block text-sm font-medium text-neutral-500 dark:text-neutral-200 mb-2';
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Phone *
-            </label>
-            <input
-              type="tel"
-              required
-              value={formData.client_phone}
-              onChange={(e) => setFormData({ ...formData, client_phone: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="(555) 123-4567"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Select Guide
-            </label>
-            <select
-              value={formData.guide_id}
-              onChange={(e) => setFormData({ ...formData, guide_id: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Any Available Guide</option>
-              {guides.map((guide) => (
-                <option key={guide.id} value={guide.id}>
-                  {guide.full_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Select Tour
-            </label>
-            <select
-              value={formData.tour_id}
-              onChange={(e) => setFormData({ ...formData, tour_id: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">General Adventure</option>
-              {tours.map((tour) => (
-                <option key={tour.id} value={tour.id}>
-                  {tour.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Start Date *
-              </label>
-              <input
-                type="date"
-                required
-                value={formData.preferred_start_date}
-                onChange={(e) => setFormData({ ...formData, preferred_start_date: e.target.value })}
-                min={new Date().toISOString().split('T')[0]}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                End Date *
-              </label>
-              <input
-                type="date"
-                required
-                value={formData.preferred_end_date}
-                onChange={(e) => setFormData({ ...formData, preferred_end_date: e.target.value })}
-                min={formData.preferred_start_date || new Date().toISOString().split('T')[0]}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Number of Participants
-            </label>
-            <input
-              type="number"
-              min="1"
-              max="20"
-              value={formData.participants_count}
-              onChange={(e) => setFormData({ ...formData, participants_count: parseInt(e.target.value) })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Additional Notes
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Any specific requirements or preferences..."
-            />
-          </div>
-
-          {submitStatus === 'success' && (
-            <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
-              Booking request submitted successfully! We'll contact you soon.
-            </div>
-          )}
-
-          {submitStatus === 'error' && (
-            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-              Failed to submit booking. Please try again.
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 rounded-lg font-semibold transition-colors"
-          >
-            {loading ? 'Submitting...' : 'Submit Booking Request'}
-          </button>
-        </form>
-      </div>
+  const Section = ({ children, title }: { children: React.ReactNode; title: string }) => (
+    <div className="space-y-3">
+      <div className="text-sm font-semibold text-neutral-500 dark:text-neutral-00">{title}</div>
+      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
     </div>
   );
+
+  const Field = ({
+    id,
+    label,
+    icon: Icon,
+    children,
+  }: {
+    id: string;
+    label: string;
+    icon?: any;
+    children: React.ReactNode;
+  }) => (
+    <label htmlFor={id} className="block">
+      <span className={groupLabel}>{label}</span>
+      <div className="relative">
+        {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-100 color-white
+         pointer-events-none" />}
+        {children}
+      </div>
+    </label>
+  );
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        key="backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/70 backdrop-blur-sm"
+        onMouseDown={onClose}
+      >
+        <motion.div
+          key="panel"
+          initial={{ opacity: 0, y: 20, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 8, scale: 0.98 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="relative w-full max-w-2xl sm:mx-auto"
+        >
+          <div className="rounded-2xl bg-gradient-to-br from-sky-400/20 via-blue-500/10 to-indigo-500/20 p-[1px] shadow-2xl">
+            <div className="rounded-2xl bg-white/80 dark:bg-neutral-950/80 backdrop-blur-xl">
+              {/* Header */}
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/40 dark:border-neutral-800/60 bg-white/60 dark:bg-neutral-950/60 backdrop-blur-xl px-6 py-4">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">Забронируйте приключение</h2>
+                  <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">Займёт меньше минуты</p>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl ring-1 ring-neutral-200/70 dark:ring-neutral-800/60 bg-white/70 dark:bg-neutral-900/70 hover:bg-white dark:hover:bg-neutral-900 transition"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5 text-neutral-600 dark:text-neutral-300" />
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <Section title="Контакты">
+                  <Field id="client_name" label="Ваше имя *" icon={User}>
+                    <input
+                      id="client_name"
+                      type="text"
+                      required
+                      value={formData.client_name}
+                      onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+                      className={`${fieldBase} pl-9`}
+                      placeholder="Иван Иванов"
+                    />
+                  </Field>
+
+                  <Field id="client_email" label="Эл. почта *" icon={Mail}>
+                    <input
+                      id="client_email"
+                      type="email"
+                      required
+                      value={formData.client_email}
+                      onChange={(e) => setFormData({ ...formData, client_email: e.target.value })}
+                      className={`${fieldBase} pl-9`}
+                      placeholder="ivan@example.com"
+                    />
+                  </Field>
+
+                  <Field id="client_phone" label="Телефон *" icon={Phone}>
+                    <input
+                      id="client_phone"
+                      type="tel"
+                      required
+                      value={formData.client_phone}
+                      onChange={(e) => setFormData({ ...formData, client_phone: e.target.value })}
+                      className={`${fieldBase} pl-9`}
+                      placeholder="+7 999 123‑45‑67"
+                    />
+                  </Field>
+
+                  <Field id="participants_count" label="Участников" icon={Users}>
+                    <input
+                      id="participants_count"
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={formData.participants_count}
+                      onChange={(e) => setFormData({ ...formData, participants_count: parseInt(e.target.value || '1', 10) })}
+                      className={`${fieldBase} pl-9`}
+                    />
+                  </Field>
+                </Section>
+
+                <Section title="План">
+                  <Field id="guide_id" label="Выберите гида">
+                    <select
+                      id="guide_id"
+                      value={formData.guide_id as any}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setFormData({ ...formData, guide_id: v === '' ? '' : Number(v) });
+                      }}
+                      className={`${fieldBase}`}
+                    >
+                      <option value="">Любой доступный гид</option>
+                      {guides.map((guide) => (
+                        <option key={guide.id} value={guide.id}>
+                          {guide.full_name}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+
+                  <Field id="tour_id" label="Выберите тур">
+                    <select
+                      id="tour_id"
+                      value={formData.tour_id as any}
+                      onChange={(e) => setFormData({ ...formData, tour_id: e.target.value })}
+                      className={`${fieldBase}`}
+                    >
+                      <option value="">Общее приключение</option>
+                      {tours.map((tour) => (
+                        <option key={tour.id} value={tour.id}>
+                          {tour.name}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+
+                  <Field id="preferred_start_date" label="Дата начала *" icon={Calendar}>
+                    <input
+                      id="preferred_start_date"
+                      type="date"
+                      required
+                      value={formData.preferred_start_date}
+                      onChange={(e) => setFormData({ ...formData, preferred_start_date: e.target.value })}
+                      min={today}
+                      className={`${fieldBase} pl-9`}
+                    />
+                  </Field>
+
+                  <Field id="preferred_end_date" label="Дата окончания *" icon={Calendar}>
+                    <input
+                      id="preferred_end_date"
+                      type="date"
+                      required
+                      value={formData.preferred_end_date}
+                      onChange={(e) => setFormData({ ...formData, preferred_end_date: e.target.value })}
+                      min={formData.preferred_start_date || today}
+                      className={`${fieldBase} pl-9`}
+                    />
+                  </Field>
+                </Section>
+
+                <div>
+                  <label htmlFor="notes" className={groupLabel}>Дополнительные пожелания</label>
+                  <div className="relative">
+                    <StickyNote className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
+                    <textarea
+                      id="notes"
+                      rows={4}
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      className={`${fieldBase} pl-9 min-h-[120px]`}
+                      placeholder="Any specific requirements or preferences..."
+                    />
+                  </div>
+                </div>
+
+                <AnimatePresence initial={false}>
+                  {submitStatus === 'success' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      className="flex items-center gap-2 rounded-xl border border-emerald-200/60 bg-emerald-50/80 px-4 py-3 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-900/30 dark:text-emerald-100"
+                    >
+                      <CheckCircle2 className="h-5 w-5" />
+                      <span>Заявка успешно отправлена! Мы скоро свяжемся с вами.</span>
+                    </motion.div>
+                  )}
+                  {submitStatus === 'error' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      className="flex items-center gap-2 rounded-xl border border-red-200/60 bg-red-50/80 px-4 py-3 text-red-800 dark:border-red-900/50 dark:bg-red-900/30 dark:text-red-100"
+                    >
+                      <AlertCircle className="h-5 w-5" />
+                      <span>Не удалось отправить заявку. Попробуйте ещё раз.</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="inline-flex w-full sm:w-1/3 items-center justify-center gap-2 rounded-xl border border-neutral-200/70 dark:border-neutral-800/60 bg-white/70 dark:bg-neutral-900/70 px-4 py-3 text-sm font-semibold text-neutral-700 dark:text-neutral-200 hover:bg-white dark:hover:bg-neutral-900 transition ring-1 ring-inset ring-white/60 dark:ring-black/20"
+                  >
+                    Отменить
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="relative inline-flex w-full sm:flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-tr from-sky-600 via-indigo-600 to-blue-600 text-white px-4 py-3 text-sm font-semibold shadow-lg shadow-sky-600/10 hover:brightness-[1.05] active:brightness-100 disabled:opacity-60 disabled:cursor-not-allowed transition"
+                  >
+                    {loading && <Loader2 className="h-4 w-4 animate-spin" />} 
+                    {loading ? 'Отправка…' : 'Отправить заявку'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  )
 }

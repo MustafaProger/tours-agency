@@ -1,3 +1,4 @@
+// App.tsx — тёмная тема по умолчанию
 import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
@@ -16,32 +17,30 @@ function App() {
   const [selectedGuideId, setSelectedGuideId] = useState<number | undefined>();
   const [loading, setLoading] = useState(true);
 
+  // DARK: включаем тёмный режим на документе
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+    return () => document.documentElement.classList.remove('dark');
+  }, []);
+
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
     setLoading(true);
-    console.log('Loading data from JSON Server...');
-
+    console.log('Загрузка данных из JSON Server...');
     try {
       const [guidesData, toursData, reviewsData] = await Promise.all([
         apiClient.getGuides(),
         apiClient.getTours(),
-        apiClient.getReviews(6)
+        apiClient.getReviews(6),
       ]);
-
-      console.log('Guides data:', guidesData);
-      console.log('Tours data:', toursData);
-      console.log('Reviews data:', reviewsData);
-
       setGuides(guidesData);
       setTours(toursData);
       setReviews(reviewsData);
-
-      console.log('Final state - Guides:', guidesData.length, 'Tours:', toursData.length, 'Reviews:', reviewsData.length);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Ошибка загрузки данных:', error);
     } finally {
       setLoading(false);
     }
@@ -54,40 +53,42 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Loading...</p>
+          <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-neutral-300 text-lg">Загрузка…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+    // DARK: базовый тёмный фон и светлый текст
+    <div className="min-h-screen bg-neutral-950 text-neutral-200">
+      <Header onBookTour={() => handleBookTour()} />
       <Hero onBookTour={() => handleBookTour()} />
 
-      <section id="guides" className="py-16 bg-white">
+      {/* Гиды */}
+      <section id="guides" className="py-16 bg-neutral-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full mb-4">
+            <div className="inline-flex items-center gap-2 bg-blue-900/30 text-blue-300 px-4 py-2 rounded-full mb-4 ring-1 ring-blue-800/50">
               <Users className="w-5 h-5" />
-              <span className="font-semibold">Our Team</span>
+              <span className="font-semibold">Наша команда</span>
             </div>
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Meet Our Expert Guides
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Познакомьтесь с нашими экспертами-гидами
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Our experienced team of travel professionals is committed to providing
-              personalized adventures tailored to your unique interests.
+            <p className="text-xl text-neutral-300 max-w-2xl mx-auto">
+              Наша опытная команда организует персональные приключения,
+              учитывая ваши интересы и предпочтения.
             </p>
           </div>
 
           {guides.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-600 text-lg">
-                No guides available at the moment. Please check back soon.
+              <p className="text-neutral-400 text-lg">
+                Сейчас гидов нет. Загляните позже.
               </p>
             </div>
           ) : (
@@ -104,26 +105,27 @@ function App() {
         </div>
       </section>
 
-      <section id="tours" className="py-16 bg-gray-50">
+      {/* Туры */}
+      <section id="tours" className="py-16 bg-neutral-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-4 py-2 rounded-full mb-4">
+            <div className="inline-flex items-center gap-2 bg-emerald-900/30 text-emerald-300 px-4 py-2 rounded-full mb-4 ring-1 ring-emerald-800/50">
               <Briefcase className="w-5 h-5" />
-              <span className="font-semibold">Our Tours</span>
+              <span className="font-semibold">Наши туры</span>
             </div>
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Amazing Adventure Tours
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Потрясающие приключенческие туры
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              From mountain hiking to cultural exploration, we offer a full range
-              of tours to satisfy every type of adventurer.
+            <p className="text-xl text-neutral-300 max-w-2xl mx-auto">
+              От восхождений в горы до культурных экспедиций — у нас полный
+              спектр туров на любой вкус.
             </p>
           </div>
 
           {tours.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-600 text-lg">
-                Tour information will be available soon.
+              <p className="text-neutral-400 text-lg">
+                Информация о турах скоро появится.
               </p>
             </div>
           ) : (
@@ -136,26 +138,27 @@ function App() {
         </div>
       </section>
 
-      <section id="reviews" className="py-16 bg-white">
+      {/* Отзывы */}
+      <section id="reviews" className="py-16 bg-neutral-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-700 px-4 py-2 rounded-full mb-4">
+            <div className="inline-flex items-center gap-2 bg-amber-900/30 text-amber-300 px-4 py-2 rounded-full mb-4 ring-1 ring-amber-800/50">
               <MessageCircle className="w-5 h-5" />
-              <span className="font-semibold">Client Reviews</span>
+              <span className="font-semibold">Отзывы клиентов</span>
             </div>
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              What Our Clients Say
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Что говорят наши клиенты
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Read testimonials from our satisfied clients who have experienced
-              unforgettable adventures with us.
+            <p className="text-xl text-neutral-300 max-w-2xl mx-auto">
+              Читайте впечатления тех, кто уже отправился с нами
+              в незабываемые приключения.
             </p>
           </div>
 
           {reviews.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-600 text-lg">
-                Be the first to share your adventure experience with us!
+              <p className="text-neutral-400 text-lg">
+                Будьте первыми, кто поделится впечатлениями!
               </p>
             </div>
           ) : (
@@ -168,18 +171,19 @@ function App() {
         </div>
       </section>
 
-      <footer className="bg-gray-900 text-white py-12">
+      {/* Подвал */}
+      <footer className="bg-neutral-950 text-neutral-200 py-12 border-t border-neutral-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h3 className="text-2xl font-bold mb-4">Adventure Tours</h3>
-            <p className="text-gray-400 mb-6">
-              Excellence in Travel - Creating Unforgettable Adventures
+            <h3 className="text-2xl font-bold mb-4 text-white">Приключенческие туры</h3>
+            <p className="text-neutral-400 mb-6">
+              Совершенство в путешествиях — создаём незабываемые приключения
             </p>
             <button
               onClick={() => handleBookTour()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+              className="bg-gradient-to-tr from-sky-600 via-indigo-600 to-blue-600 hover:brightness-110 text-white px-8 py-3 rounded-xl font-semibold transition"
             >
-              Start Your Adventure Today
+              Начните путешествие уже сегодня
             </button>
           </div>
         </div>

@@ -1,48 +1,47 @@
-import { Clock, DollarSign, MapPin, Users } from 'lucide-react';
-import type { Tour } from '../lib/api';
+// TourCard.tsx
+import { Clock, DollarSign, MapPin, Users } from "lucide-react";
+import type { Tour } from "../lib/api";
+import { Card, Chip, Button, GhostButton } from "../ui/ui";
 
 interface TourCardProps {
   tour: Tour;
+  onSelect?: (tourId: number) => void;
 }
 
-export function TourCard({ tour }: TourCardProps) {
+export function TourCard({ tour, onSelect }: TourCardProps) {
+  const diffMap: Record<string, { label: string; cls: string }> = {
+    easy:   { label: "легкий",  cls: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100" },
+    medium: { label: "средний", cls: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-100" },
+    hard:   { label: "сложный", cls: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-100" },
+  };
+  const diff = tour.difficulty_level && (diffMap[tour.difficulty_level] ?? { label: tour.difficulty_level, cls: "" });
+
   return (
-    <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow p-6 border-l-4 border-blue-600">
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{tour.name}</h3>
+    <Card className="p-6">
+      <div className="flex items-start justify-between gap-4">
+        <h3 className="text-xl font-bold text-neutral-900 dark:text-white">{tour.name}</h3>
+        {diff && <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${diff.cls}`}>Сложность: {diff.label}</span>}
+      </div>
+
       {tour.destination && (
-        <p className="text-sm text-blue-600 font-semibold mb-3 flex items-center gap-1">
+        <p className="mt-1 text-sm text-indigo-700 dark:text-indigo-400 font-medium flex items-center gap-1">
           <MapPin className="w-4 h-4" />
           {tour.destination}
         </p>
       )}
-      <p className="text-gray-700 mb-4">{tour.description}</p>
-      <div className="flex items-center justify-between text-sm text-gray-600">
-        <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-blue-600" />
-          <span>{tour.duration_days} days</span>
-        </div>
-        {tour.price_range && (
-          <div className="flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-blue-600" />
-            <span>{tour.price_range}</span>
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-blue-600" />
-          <span>Max {tour.max_participants}</span>
-        </div>
+
+      <p className="mt-3 text-neutral-700 dark:text-neutral-300 line-clamp-4">{tour.description}</p>
+
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm text-neutral-600 dark:text-neutral-400">
+        <Chip><Clock className="w-4 h-4" /> {tour.duration_days} дн.</Chip>
+        <Chip><Users className="w-4 h-4" /> Макс {tour.max_participants}</Chip>
+        {tour.price_range && <Chip><DollarSign className="w-4 h-4" /> {tour.price_range}</Chip>}
       </div>
-      {tour.difficulty_level && (
-        <div className="mt-3">
-          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-            tour.difficulty_level === 'easy' ? 'bg-green-100 text-green-800' :
-            tour.difficulty_level === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-red-100 text-red-800'
-          }`}>
-            {tour.difficulty_level.toUpperCase()}
-          </span>
-        </div>
-      )}
-    </div>
+
+      <div className="mt-5 flex gap-3">
+        <GhostButton>Подробнее</GhostButton>
+        <Button onClick={() => onSelect?.(tour.id)}>Выбрать тур</Button>
+      </div>
+    </Card>
   );
 }
