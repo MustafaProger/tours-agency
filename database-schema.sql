@@ -1,10 +1,15 @@
--- Tours Agency Database Schema
+-- Normalize specialties into a separate table
+CREATE TABLE IF NOT EXISTS specialties (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+
 -- Таблица гидов (аналог doctors)
-CREATE TABLE guides (
+CREATE TABLE IF NOT EXISTS guides (
     id SERIAL PRIMARY KEY,
     full_name VARCHAR(255) NOT NULL,
     title VARCHAR(255) NOT NULL,
-    specialty_id INTEGER,
+    specialty_id INTEGER REFERENCES specialties(id) ON DELETE SET NULL,
     bio TEXT,
     education TEXT,
     experience_years INTEGER,
@@ -18,7 +23,7 @@ CREATE TABLE guides (
 );
 
 -- Таблица туров (аналог services)
-CREATE TABLE tours (
+CREATE TABLE IF NOT EXISTS tours (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -27,31 +32,31 @@ CREATE TABLE tours (
     destination VARCHAR(255),
     difficulty_level VARCHAR(50), -- easy, medium, hard
     max_participants INTEGER,
-    specialty_id INTEGER,
+    specialty_id INTEGER REFERENCES specialties(id) ON DELETE SET NULL,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Таблица отзывов (аналог testimonials)
-CREATE TABLE reviews (
+CREATE TABLE IF NOT EXISTS reviews (
     id SERIAL PRIMARY KEY,
     client_name VARCHAR(255) NOT NULL,
     rating INTEGER CHECK (rating >= 1 AND rating <= 5),
     comment TEXT,
-    tour_id INTEGER,
-    guide_id INTEGER,
+    tour_id INTEGER REFERENCES tours(id) ON DELETE SET NULL,
+    guide_id INTEGER REFERENCES guides(id) ON DELETE SET NULL,
     is_approved BOOLEAN DEFAULT false,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Таблица бронирований (аналог appointments)
-CREATE TABLE bookings (
+CREATE TABLE IF NOT EXISTS bookings (
     id SERIAL PRIMARY KEY,
     client_name VARCHAR(255) NOT NULL,
     client_email VARCHAR(255) NOT NULL,
     client_phone VARCHAR(20) NOT NULL,
-    tour_id INTEGER,
-    guide_id INTEGER,
+    tour_id INTEGER REFERENCES tours(id) ON DELETE SET NULL,
+    guide_id INTEGER REFERENCES guides(id) ON DELETE SET NULL,
     preferred_start_date DATE,
     preferred_end_date DATE,
     participants_count INTEGER DEFAULT 1,
@@ -60,12 +65,20 @@ CREATE TABLE bookings (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Helpful indexes
+CREATE INDEX IF NOT EXISTS idx_guides_active ON guides(is_active);
+CREATE INDEX IF NOT EXISTS idx_tours_active ON tours(is_active);
+CREATE INDEX IF NOT EXISTS idx_reviews_approved ON reviews(is_approved, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_bookings_created_at ON bookings(created_at DESC);
+
 -- Тестовые данные для гидов
-INSERT INTO guides (full_name, title, bio, education, experience_years, email, phone, languages) VALUES
-('Анна Петрова', 'Senior Adventure Guide', 'Опытный гид с 8-летним стажем проведения горных походов и культурных туров. Специализируется на индивидуальных маршрутах.', 'Географический факультет МГУ, сертификат горного гида', 8, 'anna@tours.com', '+7-999-123-4567', 'Russian, English, French'),
-('Михаил Соколов', 'Mountain Guide', 'Профессиональный горный гид с 12-летним опытом. Проводил экспедиции на Эльбрус, Казбек и другие вершины Кавказа.', 'Институт физкультуры и спорта, альпинистский сертификат', 12, 'mikhail@tours.com', '+7-999-234-5678', 'Russian, English, German'),
-('Елена Волкова', 'Cultural Guide', 'Эксперт по истории и культуре России. Проводит экскурсии по Золотому кольцу и историческим местам Москвы.', 'Исторический факультет СПбГУ, курсы экскурсоводов', 6, 'elena@tours.com', '+7-999-345-6789', 'Russian, English, Italian'),
-('Дмитрий Козлов', 'Wildlife Guide', 'Специалист по дикой природе и экотуризму. Организует сафари и наблюдения за животными в заповедниках.', 'Биологический факультет МГУ, сертификат экотуризма', 10, 'dmitry@tours.com', '+7-999-456-7890', 'Russian, English, Spanish');
+INSERT INTO specialties (name) VALUES ('Adventure') ON CONFLICT DO NOTHING;
+
+INSERT INTO guides (full_name, title, specialty_id, bio, education, experience_years, email, phone, languages) VALUES
+('Анна Петрова', 'Senior Adventure Guide', (SELECT id FROM specialties WHERE name='Adventure'), 'Опытный гид с 8-летним стажем проведения горных походов и культурных туров. Специализируется на индивидуальных маршрутах.', 'Географический факультет МГУ, сертификат горного гида', 8, 'anna@tours.com', '+7-999-123-4567', 'Russian, English, French'),
+('Михаил Соколов', 'Mountain Guide', (SELECT id FROM specialties WHERE name='Adventure'), 'Профессиональный горный гид с 12-летним опытом. Проводил экспедиции на Эльбрус, Казбек и другие вершины Кавказа.', 'Институт физкультуры и спорта, альпинистский сертификат', 12, 'mikhail@tours.com', '+7-999-234-5678', 'Russian, English, German'),
+('Елена Волкова', 'Cultural Guide', (SELECT id FROM specialties WHERE name='Adventure'), 'Эксперт по истории и культуре России. Проводит экскурсии по Золотому кольцу и историческим местам Москвы.', 'Исторический факультет СПбГУ, курсы экскурсоводов', 6, 'elena@tours.com', '+7-999-345-6789', 'Russian, English, Italian'),
+('Дмитрий Козлов', 'Wildlife Guide', (SELECT id FROM specialties WHERE name='Adventure'), 'Специалист по дикой природе и экотуризму. Организует сафари и наблюдения за животными в заповедниках.', 'Биологический факультет МГУ, сертификат экотуризма', 10, 'dmitry@tours.com', '+7-999-456-7890', 'Russian, English, Spanish');
 
 -- Тестовые данные для туров
 INSERT INTO tours (name, description, duration_days, price_range, destination, difficulty_level, max_participants) VALUES

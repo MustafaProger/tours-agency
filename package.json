@@ -10,6 +10,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "server": "node server.js",
+    "db:init": "node scripts/init-db.js",
+    "test:api": "node tests/smoke.mjs",
     "dev:full": "concurrently \"npm run server\" \"npm run dev\"",
     "start": "npm run dev:full"
   },
