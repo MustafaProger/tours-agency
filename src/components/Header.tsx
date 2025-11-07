@@ -1,76 +1,87 @@
 // Header.tsx
-import { useState } from "react";
-import { MapPin, Menu, X, Calendar } from "lucide-react";
-import { Button, GhostButton } from "../ui/ui";
+import { useState } from 'react';
+import { Gauge, Menu, X, Calendar, Sparkles } from 'lucide-react';
+import { Button, GhostButton } from '../ui/ui';
 
-export function Header({ onBookTour }: { onBookTour?: () => void }) {
+interface HeaderProps {
+  onBookExperience?: () => void;
+}
+
+const links = [
+  { href: '#drivers', label: 'Pilots' },
+  { href: '#experiences', label: 'Programs' },
+  { href: '#reviews', label: 'Voices' },
+];
+
+export function Header({ onBookExperience }: HeaderProps) {
   const [open, setOpen] = useState(false);
 
-  const Link = ({
-    href,
-    children,
-  }: { href: string; children: React.ReactNode }) => (
+  const Link = ({ href, children }: { href: string; children: React.ReactNode }) => (
     <a
       href={href}
-      className="px-2 py-1 text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+      className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300 hover:text-white transition-colors"
     >
       {children}
     </a>
   );
 
   return (
-    <header className="sticky top-0 z-50">
-      <div className="bg-white/80 dark:bg-neutral-950/80 backdrop-blur-xl ring-1 ring-inset ring-neutral-200/60 dark:ring-neutral-800/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Brand */}
-          <a href="#" className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[linear-gradient(135deg,#2563EB,#7C3AED)] shadow-sm">
-              <MapPin className="w-6 h-6 text-white" />
-            </div>
-            <div className="leading-tight">
-              <span className="block text-lg font-bold tracking-tight text-neutral-900 dark:text-white">
-                Приключенческие туры
-              </span>
-              <span className="block text-xs text-neutral-500 dark:text-neutral-400">
-                Откройте мир с нами
-              </span>
-            </div>
-          </a>
+    <header className="sticky top-0 z-50 backdrop-blur-xl">
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-10">
+        <a href="#" className="flex items-center gap-3 text-white">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 via-orange-500 to-amber-400 text-white shadow-[0_0_25px_rgba(255,60,60,0.4)]">
+            <Gauge className="h-6 w-6" />
+          </div>
+          <div className="leading-tight">
+            <span className="text-xl font-black tracking-[0.4em] uppercase">SuperCar</span>
+            <p className="text-[11px] uppercase tracking-[0.5em] text-slate-400">Circuit Division</p>
+          </div>
+        </a>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="#guides">Гиды</Link>
-            <Link href="#tours">Туры</Link>
-            <Link href="#reviews">Отзывы</Link>
-            <Button onClick={onBookTour}>
-              <Calendar className="w-4 h-4" />
-              Забронировать
-            </Button>
-          </nav>
+        <nav className="hidden items-center gap-8 md:flex">
+          {links.map((link) => (
+            <Link key={link.href} href={link.href}>
+              {link.label}
+            </Link>
+          ))}
+          <Button onClick={onBookExperience}>
+            <Calendar className="h-4 w-4" />
+            Book Track
+          </Button>
+        </nav>
 
-          {/* Mobile toggle */}
-          <GhostButton
-            className="md:hidden h-10 w-10 p-0"
-            aria-label="Открыть меню"
-            onClick={() => setOpen((v) => !v)}
-          >
-            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </GhostButton>
-        </div>
+        <GhostButton className="md:hidden" onClick={() => setOpen((prev) => !prev)} aria-label="Toggle navigation">
+          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </GhostButton>
+      </div>
 
-        {/* Mobile nav */}
-        {open && (
-          <div className="md:hidden border-t border-neutral-200/60 dark:border-neutral-800/60 px-4 py-3 space-y-2">
-            <a className="block text-sm font-medium text-neutral-800 dark:text-neutral-100" href="#guides">Гиды</a>
-            <a className="block text-sm font-medium text-neutral-800 dark:text-neutral-100" href="#tours">Туры</a>
-            <a className="block text-sm font-medium text-neutral-800 dark:text-neutral-100" href="#reviews">Отзывы</a>
-            <Button className="w-full" onClick={() => { setOpen(false); onBookTour?.(); }}>
-              <Calendar className="w-4 h-4" />
-              Забронировать
+      {open && (
+        <div className="border-t border-white/10 px-4 py-4 md:hidden">
+          <div className="space-y-4">
+            {links.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="block text-sm font-semibold uppercase tracking-[0.3em] text-slate-200"
+                onClick={() => setOpen(false)}
+              >
+                {link.label}
+              </a>
+            ))}
+
+            <Button
+              className="w-full"
+              onClick={() => {
+                setOpen(false);
+                onBookExperience?.();
+              }}
+            >
+              <Sparkles className="h-4 w-4" />
+              Launch Session
             </Button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </header>
   );
 }

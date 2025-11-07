@@ -20,25 +20,25 @@ class ApiClient {
     return response.json();
   }
 
-  // --- API endpoints ---
-  getGuides() {
-    return this.request('/guides');
+  getDrivers(): Promise<Driver[]> {
+    return this.request<Driver[]>('/drivers');
   }
 
-  getTours() {
-    return this.request('/tours');
+  getExperiences(limit?: number): Promise<Experience[]> {
+    const endpoint = limit ? `/experiences?limit=${limit}` : '/experiences';
+    return this.request<Experience[]>(endpoint);
   }
 
-  getReviews(limit?: number) {
+  getReviews(limit?: number): Promise<Review[]> {
     const endpoint = limit ? `/reviews?limit=${limit}` : '/reviews';
-    return this.request(endpoint);
+    return this.request<Review[]>(endpoint);
   }
 
-  getBookings() {
-    return this.request('/bookings');
+  getBookings(): Promise<Booking[]> {
+    return this.request<Booking[]>('/bookings');
   }
 
-  createBooking(booking: any) {
+  createBooking(booking: CreateBookingDTO) {
     return this.request('/bookings', {
       method: 'POST',
       body: JSON.stringify(booking),
@@ -46,18 +46,17 @@ class ApiClient {
   }
 }
 
-// Экспортируем экземпляр
 export const apiClient = new ApiClient();
 
-// --- типы ---
-export interface Guide {
+export interface Driver {
   id: number;
   full_name: string;
   title: string;
-  specialty_id: number;
+  discipline_id: number | null;
   bio: string;
-  education: string;
+  certifications: string;
   experience_years: number;
+  hero_car: string;
   image_url: string;
   email: string;
   phone: string;
@@ -67,16 +66,18 @@ export interface Guide {
   updated_at: string;
 }
 
-export interface Tour {
+export interface Experience {
   id: number;
   name: string;
   description: string;
-  duration_days: number;
+  track_layout: string;
+  intensity_level: string;
+  duration_minutes: number;
   price_range: string;
-  destination: string;
-  difficulty_level: string;
-  max_participants: number;
-  specialty_id: number;
+  location: string;
+  max_cars: number;
+  discipline_id: number | null;
+  image_url: string;
   is_active: boolean;
   created_at: string;
 }
@@ -86,8 +87,8 @@ export interface Review {
   client_name: string;
   rating: number;
   comment: string;
-  tour_id: number;
-  guide_id: number;
+  experience_id: number | null;
+  driver_id: number | null;
   is_approved: boolean;
   created_at: string;
 }
@@ -97,12 +98,25 @@ export interface Booking {
   client_name: string;
   client_email: string;
   client_phone: string;
-  tour_id: number;
-  guide_id: number;
-  preferred_start_date: string;
-  preferred_end_date: string;
+  driver_id: number | null;
+  experience_id: number | null;
+  preferred_track_date: string;
+  preferred_track_time: string;
   participants_count: number;
   notes: string;
   status: string;
   created_at: string;
+}
+
+export interface CreateBookingDTO {
+  client_name: string;
+  client_email: string;
+  client_phone: string;
+  driver_id: number | null;
+  experience_id: number | null;
+  preferred_track_date: string;
+  preferred_track_time: string;
+  participants_count: number;
+  notes?: string;
+  status?: 'pending' | 'confirmed' | 'cancelled' | 'waitlist';
 }

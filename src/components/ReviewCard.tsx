@@ -1,30 +1,28 @@
-// ReviewCard.tsx
-import { Star } from "lucide-react";
-import type { Review } from "../lib/api";
-import { Card } from "../ui/ui";
+import { Star } from 'lucide-react';
+import type { Review } from '../lib/api';
 
-interface ReviewCardProps { review: Review }
+interface ReviewCardProps {
+  review: Review;
+}
 
 export function ReviewCard({ review }: ReviewCardProps) {
   const rating = Math.max(0, Math.min(5, review.rating));
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center gap-1 mb-3" aria-label={`Рейтинг: ${rating} из 5`}>
-        {Array.from({ length: 5 }).map((_, i) => (
+    <article className="relative flex h-full flex-col overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br from-[#0d0d13] to-[#050507] p-6 text-white shadow-[0_20px_50px_rgba(5,5,10,0.7)]">
+      <div className="flex items-center gap-1" aria-label={`Rating ${rating} of 5`}>
+        {Array.from({ length: 5 }).map((_, index) => (
           <Star
-            key={i}
-            className={`w-5 h-5 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-neutral-300 dark:text-neutral-700"}`}
+            key={index}
+            className={`h-4 w-4 ${index < rating ? 'text-amber-300 fill-amber-300' : 'text-slate-600'}`}
           />
         ))}
       </div>
-      <p className="text-neutral-700 dark:text-neutral-300 italic mb-4">«{review.comment}»</p>
-      <div className="border-t border-neutral-200/70 dark:border-neutral-800/70 pt-4">
-        <p className="font-semibold text-neutral-900 dark:text-white">{review.client_name}</p>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-          {new Date(review.created_at).toLocaleDateString("ru-RU")}
-        </p>
+      <p className="mt-4 text-lg font-semibold text-slate-100">“{review.comment}”</p>
+      <div className="mt-auto border-t border-white/5 pt-4 text-sm text-slate-300">
+        <p className="font-semibold tracking-[0.3em] uppercase">{review.client_name}</p>
+        <p className="text-xs text-slate-500">{new Date(review.created_at).toLocaleDateString('ru-RU')}</p>
       </div>
-    </Card>
+    </article>
   );
 }
