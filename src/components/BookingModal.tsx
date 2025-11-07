@@ -1,17 +1,30 @@
 import { useState, useEffect } from 'react';
-import { X, Loader2, CheckCircle2, AlertCircle, Calendar, User, Mail, Phone, Users, StickyNote } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { apiClient, type Guide, type Tour } from '../lib/api';
+import type { ElementType, ReactNode } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  X,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  Calendar,
+  User,
+  Mail,
+  Phone,
+  Users,
+  StickyNote,
+  Timer,
+} from 'lucide-react';
+import { apiClient, type Driver, type Experience } from '../lib/api';
 
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedGuideId?: number;
+  selectedDriverId?: number;
 }
 
-export function BookingModal({ isOpen, onClose, selectedGuideId }: BookingModalProps) {
-  const [guides, setGuides] = useState<Guide[]>([]);
-  const [tours, setTours] = useState<Tour[]>([]);
+export function BookingModal({ isOpen, onClose, selectedDriverId }: BookingModalProps) {
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [experiences, setExperiences] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
@@ -19,92 +32,53 @@ export function BookingModal({ isOpen, onClose, selectedGuideId }: BookingModalP
     client_name: '',
     client_email: '',
     client_phone: '',
-    guide_id: selectedGuideId || '',
-    tour_id: '',
-    preferred_start_date: '',
-    preferred_end_date: '',
+    driver_id: selectedDriverId ? String(selectedDriverId) : '',
+    experience_id: '',
+    preferred_track_date: '',
+    preferred_track_time: '',
     participants_count: 1,
     notes: '',
   });
 
   useEffect(() => {
-    if (isOpen) {
-      loadGuidesAndTours();
-      if (selectedGuideId) {
-        setFormData(prev => ({ ...prev, guide_id: selectedGuideId }));
+    if (!isOpen) return;
+
+    const load = async () => {
+      try {
+        const [driverData, experienceData] = await Promise.all([
+          apiClient.getDrivers(),
+          apiClient.getExperiences(),
+        ]);
+        setDrivers(driverData);
+        setExperiences(experienceData);
+      } catch (error) {
+        console.error('Failed to load dictionary data', error);
       }
-      const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-      window.addEventListener('keydown', onEsc);
-      return () => window.removeEventListener('keydown', onEsc);
+    };
+
+    load();
+
+    const onEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onEsc);
+    return () => window.removeEventListener('keydown', onEsc);
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (selectedDriverId) {
+      setFormData((prev) => ({ ...prev, driver_id: String(selectedDriverId) }));
     }
-  }, [isOpen, selectedGuideId]);
-
-  const loadGuidesAndTours = async () => {
-    try {
-      const [guidesData, toursData] = await Promise.all([
-        apiClient.getGuides(),
-        apiClient.getTours()
-      ]);
-
-      setGuides(guidesData);
-      setTours(toursData);
-    } catch (error) {
-      console.error('Error loading guides and tours:', error);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setSubmitStatus('idle');
-
-    try {
-      await apiClient.createBooking({
-        ...formData,
-        guide_id: formData.guide_id || null,
-        tour_id: formData.tour_id || null,
-        status: 'pending'
-      });
-
-      setSubmitStatus('success');
-      setTimeout(() => {
-        onClose();
-        setFormData({
-          client_name: '',
-          client_email: '',
-          client_phone: '',
-          guide_id: selectedGuideId || '',
-          tour_id: '',
-          preferred_start_date: '',
-          preferred_end_date: '',
-          participants_count: 1,
-          notes: '',
-        });
-        setSubmitStatus('idle');
-      }, 1800);
-    } catch (error) {
-      setSubmitStatus('error');
-      console.error('Error submitting booking:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [selectedDriverId]);
 
   if (!isOpen) return null;
 
   const today = new Date().toISOString().split('T')[0];
 
   const fieldBase =
-    'w-full rounded-xl border border-transparent bg-white/70 dark:bg-neutral-900/80 backdrop-blur-sm shadow-sm ring-1 ring-neutral-300/80 dark:ring-neutral-700 px-4 py-3.5 outline-none transition focus:ring-2 focus:ring-sky-400/70 dark:focus:ring-sky-800/70 placeholder:text-neutral-500 text-neutral-500';
+    'w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-500/40';
 
-  const groupLabel = 'block text-sm font-medium text-neutral-500 dark:text-neutral-200 mb-2';
-
-  const Section = ({ children, title }: { children: React.ReactNode; title: string }) => (
-    <div className="space-y-3">
-      <div className="text-sm font-semibold text-neutral-500 dark:text-neutral-00">{title}</div>
-      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
-    </div>
-  );
+  const labelStyles = 'mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-400';
 
   const Field = ({
     id,
@@ -114,18 +88,62 @@ export function BookingModal({ isOpen, onClose, selectedGuideId }: BookingModalP
   }: {
     id: string;
     label: string;
-    icon?: any;
-    children: React.ReactNode;
+    icon?: ElementType;
+    children: ReactNode;
   }) => (
     <label htmlFor={id} className="block">
-      <span className={groupLabel}>{label}</span>
+      <span className={labelStyles}>{label}</span>
       <div className="relative">
-        {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-100 color-white
-         pointer-events-none" />}
+        {Icon && <Icon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />}
         {children}
       </div>
     </label>
   );
+
+  const Section = ({ title, children }: { title: string; children: ReactNode }) => (
+    <div className="space-y-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.5em] text-slate-500">{title}</p>
+      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+    </div>
+  );
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+    setSubmitStatus('idle');
+
+    try {
+      await apiClient.createBooking({
+        ...formData,
+        driver_id: formData.driver_id ? Number(formData.driver_id) : null,
+        experience_id: formData.experience_id ? Number(formData.experience_id) : null,
+        participants_count: Number(formData.participants_count) || 1,
+        status: 'pending',
+      });
+
+      setSubmitStatus('success');
+      setTimeout(() => {
+        onClose();
+        setFormData({
+          client_name: '',
+          client_email: '',
+          client_phone: '',
+          driver_id: '',
+          experience_id: '',
+          preferred_track_date: '',
+          preferred_track_time: '',
+          participants_count: 1,
+          notes: '',
+        });
+        setSubmitStatus('idle');
+      }, 1600);
+    } catch (error) {
+      console.error('Booking failed', error);
+      setSubmitStatus('error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -134,159 +152,155 @@ export function BookingModal({ isOpen, onClose, selectedGuideId }: BookingModalP
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/70 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xl"
         onMouseDown={onClose}
       >
         <motion.div
           key="panel"
-          initial={{ opacity: 0, y: 20, scale: 0.98 }}
+          initial={{ opacity: 0, y: 20, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 8, scale: 0.98 }}
+          exit={{ opacity: 0, y: 8, scale: 0.96 }}
           transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-          onMouseDown={(e) => e.stopPropagation()}
-          className="relative w-full max-w-2xl sm:mx-auto"
+          onMouseDown={(event) => event.stopPropagation()}
+          className="relative w-full max-w-2xl"
         >
-          <div className="rounded-2xl bg-gradient-to-br from-sky-400/20 via-blue-500/10 to-indigo-500/20 p-[1px] shadow-2xl">
-            <div className="rounded-2xl bg-white/80 dark:bg-neutral-950/80 backdrop-blur-xl">
-              {/* Header */}
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/40 dark:border-neutral-800/60 bg-white/60 dark:bg-neutral-950/60 backdrop-blur-xl px-6 py-4">
+          <div className="rounded-[32px] border border-white/10 bg-[#05050a]/95 p-[1px] shadow-[0_30px_90px_rgba(5,5,10,0.8)]">
+            <div className="rounded-[32px] bg-gradient-to-br from-[#11111a] via-[#08070f] to-[#05050a] text-white">
+              <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">Забронируйте приключение</h2>
-                  <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">Займёт меньше минуты</p>
+                  <p className="text-xs uppercase tracking-[0.5em] text-slate-500">Session booking</p>
+                  <h2 className="text-2xl font-black tracking-[0.2em] text-white">Hyperdrive form</h2>
                 </div>
                 <button
                   onClick={onClose}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl ring-1 ring-neutral-200/70 dark:ring-neutral-800/60 bg-white/70 dark:bg-neutral-900/70 hover:bg-white dark:hover:bg-neutral-900 transition"
-                  aria-label="Close"
+                  className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 text-slate-300 transition hover:border-white/30 hover:text-white"
+                  aria-label="Закрыть модальное окно"
                 >
-                  <X className="h-5 w-5 text-neutral-600 dark:text-neutral-300" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
                 <Section title="Контакты">
-                  <Field id="client_name" label="Ваше имя *" icon={User}>
+                  <Field id="client_name" label="Имя" icon={User}>
                     <input
                       id="client_name"
                       type="text"
                       required
                       value={formData.client_name}
                       onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
-                      className={`${fieldBase} pl-9`}
-                      placeholder="Иван Иванов"
+                      className={`${fieldBase} pl-12`}
+                      placeholder="Александр Вольт"
                     />
                   </Field>
 
-                  <Field id="client_email" label="Эл. почта *" icon={Mail}>
+                  <Field id="client_email" label="Email" icon={Mail}>
                     <input
                       id="client_email"
                       type="email"
                       required
                       value={formData.client_email}
                       onChange={(e) => setFormData({ ...formData, client_email: e.target.value })}
-                      className={`${fieldBase} pl-9`}
-                      placeholder="ivan@example.com"
+                      className={`${fieldBase} pl-12`}
+                      placeholder="volt@studio.io"
                     />
                   </Field>
 
-                  <Field id="client_phone" label="Телефон *" icon={Phone}>
+                  <Field id="client_phone" label="Телефон" icon={Phone}>
                     <input
                       id="client_phone"
                       type="tel"
                       required
                       value={formData.client_phone}
                       onChange={(e) => setFormData({ ...formData, client_phone: e.target.value })}
-                      className={`${fieldBase} pl-9`}
-                      placeholder="+7 999 123‑45‑67"
+                      className={`${fieldBase} pl-12`}
+                      placeholder="+1 (702) 555-8899"
                     />
                   </Field>
 
-                  <Field id="participants_count" label="Участников" icon={Users}>
+                  <Field id="participants_count" label="Экипаж" icon={Users}>
                     <input
                       id="participants_count"
                       type="number"
                       min={1}
-                      max={20}
+                      max={10}
                       value={formData.participants_count}
-                      onChange={(e) => setFormData({ ...formData, participants_count: parseInt(e.target.value || '1', 10) })}
-                      className={`${fieldBase} pl-9`}
+                      onChange={(e) => setFormData({ ...formData, participants_count: Number(e.target.value) })}
+                      className={`${fieldBase} pl-12`}
                     />
                   </Field>
                 </Section>
 
-                <Section title="План">
-                  <Field id="guide_id" label="Выберите гида">
+                <Section title="Параметры трека">
+                  <Field id="driver_id" label="Пилот">
                     <select
-                      id="guide_id"
-                      value={formData.guide_id as any}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setFormData({ ...formData, guide_id: v === '' ? '' : Number(v) });
-                      }}
-                      className={`${fieldBase}`}
+                      id="driver_id"
+                      value={formData.driver_id}
+                      onChange={(e) => setFormData({ ...formData, driver_id: e.target.value })}
+                      className={fieldBase}
                     >
-                      <option value="">Любой доступный гид</option>
-                      {guides.map((guide) => (
-                        <option key={guide.id} value={guide.id}>
-                          {guide.full_name}
+                      <option value="">Любой пилот</option>
+                      {drivers.map((driver) => (
+                        <option key={driver.id} value={driver.id}>
+                          {driver.full_name} — {driver.title}
                         </option>
                       ))}
                     </select>
                   </Field>
 
-                  <Field id="tour_id" label="Выберите тур">
+                  <Field id="experience_id" label="Программа">
                     <select
-                      id="tour_id"
-                      value={formData.tour_id as any}
-                      onChange={(e) => setFormData({ ...formData, tour_id: e.target.value })}
-                      className={`${fieldBase}`}
+                      id="experience_id"
+                      value={formData.experience_id}
+                      onChange={(e) => setFormData({ ...formData, experience_id: e.target.value })}
+                      className={fieldBase}
                     >
-                      <option value="">Общее приключение</option>
-                      {tours.map((tour) => (
-                        <option key={tour.id} value={tour.id}>
-                          {tour.name}
+                      <option value="">Я ещё выбираю</option>
+                      {experiences.map((experience) => (
+                        <option key={experience.id} value={experience.id}>
+                          {experience.name} — {experience.location}
                         </option>
                       ))}
                     </select>
                   </Field>
 
-                  <Field id="preferred_start_date" label="Дата начала *" icon={Calendar}>
+                  <Field id="preferred_track_date" label="Дата" icon={Calendar}>
                     <input
-                      id="preferred_start_date"
+                      id="preferred_track_date"
                       type="date"
                       required
-                      value={formData.preferred_start_date}
-                      onChange={(e) => setFormData({ ...formData, preferred_start_date: e.target.value })}
                       min={today}
-                      className={`${fieldBase} pl-9`}
+                      value={formData.preferred_track_date}
+                      onChange={(e) => setFormData({ ...formData, preferred_track_date: e.target.value })}
+                      className={`${fieldBase} pl-12`}
                     />
                   </Field>
 
-                  <Field id="preferred_end_date" label="Дата окончания *" icon={Calendar}>
+                  <Field id="preferred_track_time" label="Старт" icon={Timer}>
                     <input
-                      id="preferred_end_date"
-                      type="date"
+                      id="preferred_track_time"
+                      type="time"
                       required
-                      value={formData.preferred_end_date}
-                      onChange={(e) => setFormData({ ...formData, preferred_end_date: e.target.value })}
-                      min={formData.preferred_start_date || today}
-                      className={`${fieldBase} pl-9`}
+                      value={formData.preferred_track_time}
+                      onChange={(e) => setFormData({ ...formData, preferred_track_time: e.target.value })}
+                      className={`${fieldBase} pl-12`}
                     />
                   </Field>
                 </Section>
 
                 <div>
-                  <label htmlFor="notes" className={groupLabel}>Дополнительные пожелания</label>
+                  <label htmlFor="notes" className={labelStyles}>
+                    Особые запросы
+                  </label>
                   <div className="relative">
-                    <StickyNote className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
+                    <StickyNote className="pointer-events-none absolute left-4 top-3 h-4 w-4 text-slate-500" />
                     <textarea
                       id="notes"
                       rows={4}
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      className={`${fieldBase} pl-9 min-h-[120px]`}
-                      placeholder="Any specific requirements or preferences..."
+                      className={`${fieldBase} pl-12`}
+                      placeholder="Необходимо подключить телеметрию, снять дрон и т.д."
                     />
                   </div>
                 </div>
@@ -297,10 +311,10 @@ export function BookingModal({ isOpen, onClose, selectedGuideId }: BookingModalP
                       initial={{ opacity: 0, y: -6 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -6 }}
-                      className="flex items-center gap-2 rounded-xl border border-emerald-200/60 bg-emerald-50/80 px-4 py-3 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-900/30 dark:text-emerald-100"
+                      className="flex items-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200"
                     >
                       <CheckCircle2 className="h-5 w-5" />
-                      <span>Заявка успешно отправлена! Мы скоро свяжемся с вами.</span>
+                      <span>Слот забронирован. Команда свяжется в течение часа.</span>
                     </motion.div>
                   )}
                   {submitStatus === 'error' && (
@@ -308,7 +322,7 @@ export function BookingModal({ isOpen, onClose, selectedGuideId }: BookingModalP
                       initial={{ opacity: 0, y: -6 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -6 }}
-                      className="flex items-center gap-2 rounded-xl border border-red-200/60 bg-red-50/80 px-4 py-3 text-red-800 dark:border-red-900/50 dark:bg-red-900/30 dark:text-red-100"
+                      className="flex items-center gap-2 rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200"
                     >
                       <AlertCircle className="h-5 w-5" />
                       <span>Не удалось отправить заявку. Попробуйте ещё раз.</span>
@@ -316,21 +330,20 @@ export function BookingModal({ isOpen, onClose, selectedGuideId }: BookingModalP
                   )}
                 </AnimatePresence>
 
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <div className="flex flex-col gap-3 pt-2 sm:flex-row">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="inline-flex w-full sm:w-1/3 items-center justify-center gap-2 rounded-xl border border-neutral-200/70 dark:border-neutral-800/60 bg-white/70 dark:bg-neutral-900/70 px-4 py-3 text-sm font-semibold text-neutral-700 dark:text-neutral-200 hover:bg-white dark:hover:bg-neutral-900 transition ring-1 ring-inset ring-white/60 dark:ring-black/20"
+                    className="inline-flex w-full items-center justify-center rounded-2xl border border-white/15 px-4 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-200 transition hover:border-white/40 sm:w-1/3"
                   >
                     Отменить
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="relative inline-flex w-full sm:flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-tr from-sky-600 via-indigo-600 to-blue-600 text-white px-4 py-3 text-sm font-semibold shadow-lg shadow-sky-600/10 hover:brightness-[1.05] active:brightness-100 disabled:opacity-60 disabled:cursor-not-allowed transition"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-500 via-orange-400 to-amber-300 px-4 py-3 text-xs font-black uppercase tracking-[0.4em] text-black transition hover:brightness-110 disabled:opacity-60 sm:flex-1"
                   >
-                    {loading && <Loader2 className="h-4 w-4 animate-spin" />} 
-                    {loading ? 'Отправка…' : 'Отправить заявку'}
+                    {loading && <Loader2 className="h-4 w-4 animate-spin" />} {loading ? 'Отправка...' : 'Запустить слот'}
                   </button>
                 </div>
               </form>
@@ -339,5 +352,5 @@ export function BookingModal({ isOpen, onClose, selectedGuideId }: BookingModalP
         </motion.div>
       </motion.div>
     </AnimatePresence>
-  )
+  );
 }

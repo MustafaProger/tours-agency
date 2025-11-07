@@ -1,4 +1,4 @@
-// Minimal DB initializer for SoutSide
+// Minimal DB initializer for SuperCar Experience
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -8,7 +8,7 @@ import { neon } from '@neondatabase/serverless';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-dotenv.config({ path: resolve(__dirname, '..', '..', '.env') });
+dotenv.config({ path: resolve(__dirname, '..', '.env') });
 
 if (!process.env.DATABASE_URL) {
   console.error('❌ DATABASE_URL not set in .env');
@@ -31,6 +31,9 @@ async function run() {
 }
 
 run();
+
+
+
 
 
 

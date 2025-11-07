@@ -1,201 +1,159 @@
-// App.tsx — тёмная тема по умолчанию
 import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
-import { TourGuideCard } from './components/TourGuideCard';
-import { TourCard } from './components/TourCard';
+import { DriverCard } from './components/DriverCard';
+import { ExperienceCard } from './components/ExperienceCard';
 import { ReviewCard } from './components/ReviewCard';
 import { BookingModal } from './components/BookingModal';
-import { apiClient, type Guide, type Tour, type Review } from './lib/api';
-import { Users, Briefcase, MessageCircle } from 'lucide-react';
+import { apiClient, type Driver, type Experience, type Review } from './lib/api';
+import { Sparkles, Flame } from 'lucide-react';
 
 function App() {
-  const [guides, setGuides] = useState<Guide[]>([]);
-  const [tours, setTours] = useState<Tour[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [experiences, setExperiences] = useState<Experience[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedGuideId, setSelectedGuideId] = useState<number | undefined>();
+  const [selectedDriverId, setSelectedDriverId] = useState<number | undefined>();
   const [loading, setLoading] = useState(true);
 
-  // DARK: включаем тёмный режим на документе
   useEffect(() => {
-    document.documentElement.classList.add('dark');
-    return () => document.documentElement.classList.remove('dark');
+    const load = async () => {
+      try {
+        const [driversData, experiencesData, reviewsData] = await Promise.all([
+          apiClient.getDrivers(),
+          apiClient.getExperiences(),
+          apiClient.getReviews(6),
+        ]);
+        setDrivers(driversData);
+        setExperiences(experiencesData);
+        setReviews(reviewsData);
+      } catch (error) {
+        console.error('Failed to load content', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
   }, []);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    console.log('Загрузка данных из JSON Server...');
-    try {
-      const [guidesData, toursData, reviewsData] = await Promise.all([
-        apiClient.getGuides(),
-        apiClient.getTours(),
-        apiClient.getReviews(6),
-      ]);
-      setGuides(guidesData);
-      setTours(toursData);
-      setReviews(reviewsData);
-    } catch (error) {
-      console.error('Ошибка загрузки данных:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBookTour = (guideId?: number) => {
-    setSelectedGuideId(guideId);
+  const handleBook = (driverId?: number) => {
+    setSelectedDriverId(driverId);
     setIsModalOpen(true);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-neutral-300 text-lg">Загрузка…</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#030308]">
+        <div className="text-center text-white">
+          <div className="mx-auto mb-6 h-16 w-16 animate-spin rounded-full border-2 border-white/40 border-t-transparent" />
+          <p className="text-sm uppercase tracking-[0.5em] text-slate-400">Booting telemetry…</p>
         </div>
       </div>
     );
   }
 
   return (
-    // DARK: базовый тёмный фон и светлый текст
-    <div className="min-h-screen bg-neutral-950 text-neutral-200">
-      <Header onBookTour={() => handleBookTour()} />
-      <Hero onBookTour={() => handleBookTour()} />
+    <div className="relative min-h-screen overflow-hidden bg-[#030308] text-white">
+      <div className="pointer-events-none absolute inset-0 opacity-40">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,60,60,0.25),_transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(0,205,255,0.18),_transparent_55%)]" />
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/asfalt-dark.png')] opacity-20" />
+      </div>
 
-      {/* Гиды */}
-      <section id="guides" className="py-16 bg-neutral-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-blue-900/30 text-blue-300 px-4 py-2 rounded-full mb-4 ring-1 ring-blue-800/50">
-              <Users className="w-5 h-5" />
-              <span className="font-semibold">Наша команда</span>
+      <div className="relative z-10">
+        <Header onBookExperience={() => handleBook()} />
+        <Hero onBookExperience={() => handleBook()} />
+
+        <section id="drivers" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 px-5 py-2 text-xs uppercase tracking-[0.5em] text-slate-300">
+              <Sparkles className="h-4 w-4 text-amber-300" />
+              Pilots
             </div>
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Познакомьтесь с нашими экспертами-гидами
-            </h2>
-            <p className="text-xl text-neutral-300 max-w-2xl mx-auto">
-              Наша опытная команда организует персональные приключения,
-              учитывая ваши интересы и предпочтения.
+            <h2 className="mt-4 text-4xl font-black tracking-tight">Curators of velocity</h2>
+            <p className="mt-3 text-base text-slate-300">
+              Топовые инструкторы hypercar сцен. Каждый держит телеметрию, свет и звук под полным контролем.
             </p>
           </div>
-
-          {guides.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-neutral-400 text-lg">
-                Сейчас гидов нет. Загляните позже.
-              </p>
-            </div>
+          {drivers.length === 0 ? (
+            <p className="text-center text-slate-400">Пилоты ещё загружаются.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {guides.map((guide) => (
-                <TourGuideCard
-                  key={guide.id}
-                  guide={guide}
-                  onSelectGuide={handleBookTour}
-                />
+            <div className="grid gap-8 md:grid-cols-2">
+              {drivers.map((driver) => (
+                <DriverCard key={driver.id} driver={driver} onSelectDriver={(id) => handleBook(id)} />
               ))}
             </div>
           )}
-        </div>
-      </section>
+        </section>
 
-      {/* Туры */}
-      <section id="tours" className="py-16 bg-neutral-950">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-emerald-900/30 text-emerald-300 px-4 py-2 rounded-full mb-4 ring-1 ring-emerald-800/50">
-              <Briefcase className="w-5 h-5" />
-              <span className="font-semibold">Наши туры</span>
-            </div>
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Потрясающие приключенческие туры
-            </h2>
-            <p className="text-xl text-neutral-300 max-w-2xl mx-auto">
-              От восхождений в горы до культурных экспедиций — у нас полный
-              спектр туров на любой вкус.
-            </p>
-          </div>
-
-          {tours.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-neutral-400 text-lg">
-                Информация о турах скоро появится.
+        <section id="experiences" className="bg-white/5 py-20 backdrop-blur-lg">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-12 text-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 px-5 py-2 text-xs uppercase tracking-[0.5em] text-slate-300">
+                <Flame className="h-4 w-4 text-fuchsia-300" />
+                Programs
+              </div>
+              <h2 className="mt-4 text-4xl font-black tracking-tight">Custom-built driving rituals</h2>
+              <p className="mt-3 text-base text-slate-300">
+                Ночные города, закрытые полигоны и гоночные лаборатории. Выбирайте интенсивность — мы соберём сетап.
               </p>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {tours.map((tour) => (
-                <TourCard key={tour.id} tour={tour} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Отзывы */}
-      <section id="reviews" className="py-16 bg-neutral-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-amber-900/30 text-amber-300 px-4 py-2 rounded-full mb-4 ring-1 ring-amber-800/50">
-              <MessageCircle className="w-5 h-5" />
-              <span className="font-semibold">Отзывы клиентов</span>
-            </div>
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Что говорят наши клиенты
-            </h2>
-            <p className="text-xl text-neutral-300 max-w-2xl mx-auto">
-              Читайте впечатления тех, кто уже отправился с нами
-              в незабываемые приключения.
-            </p>
+            {experiences.length === 0 ? (
+              <p className="text-center text-slate-400">Каталог программ обновляется.</p>
+            ) : (
+              <div className="grid gap-8 md:grid-cols-2">
+                {experiences.map((experience) => (
+                  <ExperienceCard key={experience.id} experience={experience} onSelect={() => handleBook()} />
+                ))}
+              </div>
+            )}
           </div>
+        </section>
 
+        <section id="reviews" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 px-5 py-2 text-xs uppercase tracking-[0.5em] text-slate-300">
+              <Sparkles className="h-4 w-4 text-sky-300" />
+              Feedback
+            </div>
+            <h2 className="mt-4 text-4xl font-black tracking-tight">Client telemetry</h2>
+            <p className="mt-3 text-base text-slate-300">Отзывы, собранные сразу после финишной прямой.</p>
+          </div>
           {reviews.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-neutral-400 text-lg">
-                Будьте первыми, кто поделится впечатлениями!
-              </p>
-            </div>
+            <p className="text-center text-slate-400">Пока нет опубликованных отзывов.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {reviews.map((review) => (
                 <ReviewCard key={review.id} review={review} />
               ))}
             </div>
           )}
-        </div>
-      </section>
+        </section>
 
-      {/* Подвал */}
-      <footer className="bg-neutral-950 text-neutral-200 py-12 border-t border-neutral-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h3 className="text-2xl font-bold mb-4 text-white">Приключенческие туры</h3>
-            <p className="text-neutral-400 mb-6">
-              Совершенство в путешествиях — создаём незабываемые приключения
+        <footer className="border-t border-white/10 bg-black/60">
+          <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-12 text-center sm:px-6 lg:px-8">
+            <h3 className="text-3xl font-black tracking-[0.3em] text-white">SuperCar Experience</h3>
+            <p className="text-sm text-slate-400">
+              Мы проектируем эмоции, звучащие как карбон под нагрузкой. Приложение готово к деплою и подключению базы Neon.
             </p>
             <button
-              onClick={() => handleBookTour()}
-              className="bg-gradient-to-tr from-sky-600 via-indigo-600 to-blue-600 hover:brightness-110 text-white px-8 py-3 rounded-xl font-semibold transition"
+              onClick={() => handleBook()}
+              className="mx-auto inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-fuchsia-500 via-orange-400 to-amber-300 px-8 py-4 text-xs font-black uppercase tracking-[0.4em] text-black transition hover:brightness-110"
             >
-              Начните путешествие уже сегодня
+              Initiate booking
             </button>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
 
       <BookingModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setSelectedGuideId(undefined);
+          setSelectedDriverId(undefined);
         }}
-        selectedGuideId={selectedGuideId}
+        selectedDriverId={selectedDriverId}
       />
     </div>
   );
